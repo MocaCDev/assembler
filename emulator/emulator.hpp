@@ -32,9 +32,9 @@ void add_to_line_data(uint8_t *data)
 
     if(strlen(reinterpret_cast<const char *>(data)) >= max_character_per_line)
     {
-        line_data[total_lines-1].data = (uint8_t *)calloc(max_character_per_line, sizeof(uint8_t));
+        line_data[total_lines-1].data = (uint8_t *)calloc(max_character_per_line + 1, sizeof(uint8_t));
         memcpy(line_data[total_lines-1].data, data, max_character_per_line - 1);
-        line_data[total_lines-1].data[max_character_per_line-1] = 0;
+        line_data[total_lines-1].data[max_character_per_line] = '\0';
 
         if(!(strlen(reinterpret_cast<const char *>(data)) == max_character_per_line))
         {
@@ -46,11 +46,25 @@ void add_to_line_data(uint8_t *data)
 
             line_data[total_lines-1].data = (uint8_t *)calloc((strlen(reinterpret_cast<const char *>(data)) - max_character_per_line) + 1, sizeof(uint8_t));
             memcpy(line_data[total_lines-1].data, data+(max_character_per_line), (strlen(reinterpret_cast<const char *>(data)) - max_character_per_line));
-            line_data[total_lines-1].data[strlen(reinterpret_cast<const char *>(data)) - max_character_per_line + 1] = 0;
+            line_data[total_lines-1].data[strlen(reinterpret_cast<const char *>(data)) - max_character_per_line] = '\0';
         }
     } else {
-        line_data[total_lines-1].data = (uint8_t *)calloc(strlen(reinterpret_cast<const char *>(data)), sizeof(uint8_t));
+        line_data[total_lines-1].data = (uint8_t *)calloc(strlen(reinterpret_cast<const char *>(data)) + 1, sizeof(uint8_t));
         memcpy(line_data[total_lines-1].data, data, strlen(reinterpret_cast<const char *>(data)));
+        line_data[total_lines-1].data[strlen(reinterpret_cast<const char *>(data))] = '\0';
+    }
+}
+
+void free_line_data()
+{
+    if(line_data)
+    {
+        for(size_t i = 0; i < total_lines; i++)
+            free(line_data[i].data);
+
+        free(line_data);
+        line_data = NULL;
+        total_lines = 0;
     }
 }
 

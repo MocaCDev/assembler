@@ -49,7 +49,7 @@ public:
             .address=static_cast<uint16_t>((page << 10) | offset),
             .start=this->ROM_data+((page * page_size) + (offset + 0)),
             .end=this->ROM_data+((page * page_size) + (offset + original_length)),
-            length=original_length,
+            .length=original_length,
             .assign=assign_ROM_data
         };
     }
