@@ -304,7 +304,7 @@ void display_RAM_information(RAM r)
 
     free(textures);
 
-    free_line_data();
+    //free_line_data();
     r.free_ram();
     
     //SDL_DestroyTexture(texture);
@@ -336,8 +336,8 @@ int main(int args, char *argv[]) {
     free(ROM);*/
 
     //ROM r = ROM((1024LL * 1024 * 1024) * 8);//(page_size * 2); // 2 pages (2,048 bytes)
-    RAM ram = RAM(max_ram_size); // 4gb
-    RAMAllocation *a1 = ram.init_RAM_section(4);
+    //RAM ram = RAM(max_ram_size); // 4gb
+    /*RAMAllocation *a1 = ram.init_RAM_section(4);
     ram.assign_RAM_data<uint8_t *>(a1, (uint8_t *)"data");
 
     RAMAllocation *test = ram.allocate_from_current_page(a1, 4);
@@ -354,7 +354,8 @@ int main(int args, char *argv[]) {
 
     printf("%s\n%s\n%s\n%s\n%s\n", a1->start, test->start, a2->start, a3->start, a4->start);
 
-    display_RAM_information(ram);
+    display_RAM_information(ram);*/
+    Emulator emulator("test.bin");
 
     return 0;
 }

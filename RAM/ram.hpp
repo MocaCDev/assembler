@@ -88,9 +88,53 @@ public:
 
     template<typename T>
         requires (
+            std::same_as<T, uint8_t> || std::same_as<T, uint16_t> || std::same_as<T, uint32_t>
+        )
+    RAMAllocation *allocate_at_address(T address, size_t length)
+    {
+        uint32_t pages_needed = length / page_size == 0 ? 1 : length / page_size;
+        uint32_t start_page = ram_page_size / length == 0 ? 1 : ram_page_size / length;
+        uint32_t end_page = pages_needed > 1 ? start_page + pages_needed : start_page;
+
+        if(this->total_allocations == 0)
+        {
+            this->allocations = (RAMAllocation **)calloc(1, sizeof(*this->allocations));
+            this->allocations[this->total_allocations] = new RAMAllocation{
+            .address=address,
+            .length=length,
+            .start_page=start_page,
+            .end_page=end_page,
+            .start=RAM_bin+address,
+            .end=RAM_bin+(address + length)
+        };
+            this->total_allocations++;
+        } else {
+            this->allocations = (RAMAllocation **)realloc(
+                this->allocations,
+                (this->total_allocations + 1) * sizeof(*this->allocations)
+            );
+
+            this->allocations[this->total_allocations] = new RAMAllocation{
+            .address=address,
+            .length=length,
+            .start_page=start_page,
+            .end_page=end_page,
+            .start=RAM_bin+address,
+            .end=RAM_bin+(address + length)
+        };
+            this->total_allocations++;
+        }
+
+        this->total_allocated_pages += pages_needed;
+
+        return this->allocations[this->total_allocations - 1];
+    }
+
+    template<typename T>
+        requires (
             std::same_as<T, uint8_t> || std::same_as<T, uint8_t *> || std::same_as<T, uint32_t>
         )
-    void assign_RAM_data(RAMAllocation *allocation, T data) {
+    void assign_RAM_data(RAMAllocation *allocation, T data, bool force_write_entire_length=false) {
         size_t index = 0;
         uint8_t *raw_data;
 
@@ -113,10 +157,19 @@ public:
 
         // Continue assigning so long as `index` is < allocation length, and the current index
         // of `data` is not NULL
-        while(index < allocation->length && *(raw_data + index) != 0)
+        if(!force_write_entire_length)
         {
-            *(allocation->start + index) = *(raw_data + index);
-            index++;
+            while(index < allocation->length && *(raw_data + index))
+            {
+                *(allocation->start + index) = *(raw_data + index);
+                index++;
+            }
+        } else {
+            while(index < allocation->length)
+            {
+                *(allocation->start + index) = *(raw_data + index);
+                index++;
+            }
         }
 
         if constexpr (std::is_same_v<T, uint32_t>)
@@ -185,11 +238,11 @@ public:
         if(RAM_bin != NULL) {
             printf("\nFreeing up %lu pages.\n\n", this->total_allocated_pages);
 
-            for(uint32_t i = 0; i < this->total_allocated_pages; i++)
+            for(uint32_t i = 0; i < this->total_allocations; i++)
             {
-                printf("Page: %d\n", i + 1);
-                for(uint16_t x = 0; x < ram_page_size; x++)
-                    printf("%c", RAM_bin[i * ram_page_size + x] == 0 ? '?' : RAM_bin[i * ram_page_size + x]);
+                printf("Page: %d\n", this->allocations[i]->start_page);
+                for(uint16_t x = 0; x < this->allocations[i]->length; x++)
+                    printf("%X ", RAM_bin[this->allocations[i]->address + x] == 0 ? 0 : RAM_bin[this->allocations[i]->address + x]);
 
                 printf("\n\n");
             }
